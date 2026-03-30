@@ -42,12 +42,26 @@ Guest Mode: Explore available flights without logging in.
 Passenger Mode: Sign up, log in, select flights, and manage bookings.
 Admin Mode: Use the admin login to manage flight schedules, gates, runways, and other operational tasks.
 Weather and Chaos Mode: Trigger random weather events and operational chaos to test the system’s dynamic rescheduling capabilities.
+<<<<<<< HEAD
+=======
+
+>>>>>>> eddbb78cb765dda028e1e46701ae883051f78e0b
 Contributors
 Sheikh Alimun Alahi: Gate and runway management system, seat layout, simulation engine, weather type, and weather slot features.
 Rakibur Rahman Ananta: Passenger management, app user authentication, and password security.
 Md. Irfan Sadik Chy: Flight management, departure/arrival handling, booking management, weather manager.
+<<<<<<< HEAD
+=======
+
+>>>>>>> eddbb78cb765dda028e1e46701ae883051f78e0b
 Future Work
 Real-Time API Integration: Integrate with real-time airline APIs for live flight data.
 Mobile Application: Develop a mobile app for passenger booking and flight status tracking.
 AI-Based Delay Prediction: Implement AI for better delay forecasting and automated operational adjustments.
+<<<<<<< HEAD
 Database Integration: Migrate to a database-backed architecture for enhanced data management and scalability.
+=======
+Database Integration: Migrate to a database-backed architecture for enhanced data management and scalability.
+
+Feel free to contribute or raise issues!
+>>>>>>> eddbb78cb765dda028e1e46701ae883051f78e0b
