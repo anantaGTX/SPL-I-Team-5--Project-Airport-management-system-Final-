@@ -7,13 +7,13 @@ public class Main {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     // ANSI Color Codes
-    private static final String RESET = "\u001B[0m";
-    private static final String RED = "\u001B[31m";
-    private static final String GREEN = "\u001B[32m";
-    private static final String YELLOW = "\u001B[33m";
-    private static final String CYAN = "\u001B[36m";
-    private static final String WHITE = "\u001B[37m";
-    private static final String BOLD = "\u001B[1m";
+    private static final String RESET = "";
+    private static final String RED = "";
+    private static final String GREEN = "";
+    private static final String YELLOW = "";
+    private static final String CYAN = "";
+    private static final String WHITE = "";
+    private static final String BOLD = "";
 
     // Global scanner (shared across all classes to avoid input issues)
     private static Scanner globalScanner;
@@ -31,6 +31,19 @@ public class Main {
     private static AuthManager authManager;
 
     public static void main(String[] args) {
+        // 1. Clear the "scary" text from previous runs or the terminal start
+        ConsoleUtils.clearScreen();
+
+        globalScanner = new Scanner(System.in);
+        // Enable ANSI colors on Windows CMD
+        if (System.getProperty("os.name").contains("Windows")) {
+            try {
+                new ProcessBuilder("cmd", "/c", "echo off").start().waitFor();
+                // This is a "hack" that often triggers ANSI support in certain Windows environments
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
         globalScanner = new Scanner(System.in);
 
         // ============================================================
@@ -62,7 +75,7 @@ public class Main {
         boolean exit = false;
 
         while (!exit) {
-            clearScreen();
+            ConsoleUtils.clearScreen();
             printLogo();
             printHeader("AIRPORT MANAGEMENT SYSTEM");
             System.out.println("  " + CYAN + "1" + RESET + ". Explore Flights");
@@ -380,13 +393,13 @@ public class Main {
         while (!back) {
             clearScreen();
             printHeader("FLIGHT MANAGEMENT");
-            System.out.println("  " + CYAN + "1" + RESET + ". Display all flights");
-            System.out.println("  " + CYAN + "2" + RESET + ". Display flight by Status");
-            System.out.println("  " + CYAN + "3" + RESET + ". Display flight by Flight Instance ID");
-            System.out.println("  " + CYAN + "4" + RESET + ". Departure Flights Menu");
-            System.out.println("  " + CYAN + "5" + RESET + ". Arrival Flights Menu");
-            System.out.println("  " + CYAN + "6" + RESET + ". Process Waiting Flights");
-            System.out.println("  " + YELLOW + "0" + RESET + ". Back to Admin Panel");
+            System.out.println(". Display all flights");
+            System.out.println(". Display flight by Status");
+            System.out.println(". Display flight by Flight Instance ID");
+            System.out.println(". Departure Flights Menu");
+            System.out.println(". Arrival Flights Menu");
+            System.out.println(". Process Waiting Flights");
+            System.out.println(". Back to Admin Panel");
             printSeparator();
             System.out.print("  Enter choice: ");
 
@@ -438,11 +451,11 @@ public class Main {
         while (!back) {
             clearScreen();
             printHeader("DEPARTURE FLIGHTS");
-            System.out.println("  " + CYAN + "1" + RESET + ". Prepare Boarding");
-            System.out.println("  " + CYAN + "2" + RESET + ". Complete Departure");
-            System.out.println("  " + CYAN + "3" + RESET + ". Show Departed List");
-            System.out.println("  " + CYAN + "4" + RESET + ". Clear Departed Flights File");
-            System.out.println("  " + YELLOW + "0" + RESET + ". Back");
+            System.out.println(". Prepare Boarding");
+            System.out.println(". Complete Departure");
+            System.out.println(". Show Departed List");
+            System.out.println(". Clear Departed Flights File");
+            System.out.println(". Back");
             printSeparator();
             System.out.print("  Enter choice: ");
 
@@ -487,11 +500,11 @@ public class Main {
         while (!back) {
             clearScreen();
             printHeader("ARRIVAL FLIGHTS");
-            System.out.println("  " + CYAN + "1" + RESET + ". Process Arrival");
-            System.out.println("  " + CYAN + "2" + RESET + ". Complete Arrival");
-            System.out.println("  " + CYAN + "3" + RESET + ". Show Arrived Flights");
-            System.out.println("  " + CYAN + "4" + RESET + ". Clear Arrived Flights File");
-            System.out.println("  " + YELLOW + "0" + RESET + ". Back");
+            System.out.println(". Process Arrival");
+            System.out.println(". Complete Arrival");
+            System.out.println(". Show Arrived Flights");
+            System.out.println(". Clear Arrived Flights File");
+            System.out.println(". Back");
             printSeparator();
             System.out.print("  Enter choice: ");
 
@@ -536,10 +549,10 @@ public class Main {
         while (!back) {
             clearScreen();
             printHeader("GATE MANAGEMENT");
-            System.out.println("  " + CYAN + "1" + RESET + ". Display all gates");
-            System.out.println("  " + CYAN + "2" + RESET + ". Assign gate manually");
-            System.out.println("  " + CYAN + "3" + RESET + ". Free a gate manually");
-            System.out.println("  " + YELLOW + "0" + RESET + ". Back");
+            System.out.println(". Display all gates");
+            System.out.println(". Assign gate manually");
+            System.out.println(". Free a gate manually");
+            System.out.println(". Back");
             printSeparator();
             System.out.print("  Enter choice: ");
 
@@ -582,10 +595,10 @@ public class Main {
         while (!back) {
             clearScreen();
             printHeader("RUNWAY MANAGEMENT");
-            System.out.println("  " + CYAN + "1" + RESET + ". Display all runways");
-            System.out.println("  " + CYAN + "2" + RESET + ". Assign runway manually");
-            System.out.println("  " + CYAN + "3" + RESET + ". Free a runway manually");
-            System.out.println("  " + YELLOW + "0" + RESET + ". Back");
+            System.out.println(". Display all runways");
+            System.out.println(". Assign runway manually");
+            System.out.println(". Free a runway manually");
+            System.out.println(". Back");
             printSeparator();
             System.out.print("  Enter choice: ");
 
@@ -628,9 +641,9 @@ public class Main {
         while (!back) {
             clearScreen();
             printHeader("PASSENGER MANAGEMENT");
-            System.out.println("  " + CYAN + "1" + RESET + ". Display all passengers");
-            System.out.println("  " + CYAN + "2" + RESET + ". Display cancelled bookings");
-            System.out.println("  " + YELLOW + "0" + RESET + ". Back");
+            System.out.println(". Display all passengers");
+            System.out.println(". Display cancelled bookings");
+            System.out.println(". Back");
             printSeparator();
             System.out.print("  Enter choice: ");
 
@@ -698,24 +711,28 @@ public class Main {
     }
 
     private static void printLogo() {
-        System.out.println(CYAN + "  █████╗ ██╗██████╗ ██████╗  ██████╗ ██████╗ ████████╗");
-        System.out.println("  ██╔══██╗██║██╔══██╗██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝");
-        System.out.println("  ███████║██║██████╔╝██████╔╝██║   ██║██████╔╝   ██║   ");
-        System.out.println("  ██╔══██║██║██╔══██╗██╔══██╗██║   ██║██╔══██╗   ██║   ");
-        System.out.println("  ██║  ██║██║██║  ██║██║  ██║╚██████╔╝██║  ██║   ██║   ");
-        System.out.println("  ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   " + RESET);
+        System.out.println("----------------------------------------------------------");
+        System.out.println("     _    ___ ____  ____   ___  ____ _____ ");
+        System.out.println("    / \\  |_ _|  _ \\|  _ \\ / _ \\|  _ \\_   _|");
+        System.out.println("   / _ \\  | || |_) | |_) | | | | |_) || |  ");
+        System.out.println("  / ___ \\ | ||  _ <|  __/| |_| |  _ < | |  ");
+        System.out.println(" /_/   \\_\\___|_| \\_\\_|    \\___/|_| \\_\\|_|  ");
+        System.out.println("                                           ");
+        System.out.println("         AIRPORT MANAGEMENT SYSTEM         ");
+        System.out.println("----------------------------------------------------------");
     }
-
     private static void printHeader(String title) {
         int width = 50;
         int padding = (width - title.length()) / 2;
-        System.out.println("\n" + CYAN + "╔" + "═".repeat(width) + "╗" + RESET);
-        System.out.println(CYAN + "║" + RESET + " ".repeat(padding) + BOLD + title + RESET + " ".repeat(width - title.length() - padding) + CYAN + "║" + RESET);
-        System.out.println(CYAN + "╚" + "═".repeat(width) + "╝" + RESET);
+        // Use standard characters instead of ╔ ═ ╚
+        System.out.println("\n+" + "-".repeat(width) + "+");
+        System.out.println("|" + " ".repeat(padding) + title + " ".repeat(width - title.length() - padding) + "|");
+        System.out.println("+" + "-".repeat(width) + "+");
     }
 
     private static void printSeparator() {
-        System.out.println(CYAN + "  " + "─".repeat(40) + RESET);
+        // Use standard dashes instead of fancy bars
+        System.out.println("-".repeat(60));
     }
 
     private static void waitForEnter() {
