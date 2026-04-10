@@ -12,7 +12,7 @@ public class WeatherManager {
     private Scanner sc = new Scanner(System.in);
     private DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
-    // NEW: Simulation mode flag
+    // Simulation mode flag
     private boolean simulationMode = false;
 
     public WeatherManager() {
@@ -48,10 +48,20 @@ public class WeatherManager {
         }
     }
 
+    // FIX: Overwrite the whole file instead of appending to prevent duplicates
     private void saveWeatherToFile(WeatherSlot slot) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter("weather.txt", true))) {
-            bw.write(slot.getStartTime() + "," + slot.getEndTime() + "," + slot.getType());
-            bw.newLine();
+        // Add to in-memory list
+        weatherSlots.add(slot);
+        // Save all slots to file
+        saveAllWeatherToFile();
+    }
+
+    private void saveAllWeatherToFile() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("weather.txt"))) {
+            for (WeatherSlot slot : weatherSlots) {
+                bw.write(slot.getStartTime() + "," + slot.getEndTime() + "," + slot.getType());
+                bw.newLine();
+            }
         } catch (IOException e) {
             System.out.println("Error saving weather.");
         }
@@ -65,6 +75,7 @@ public class WeatherManager {
      * Get the weather for a given time.
      * Weather blocks: HH:01 to (HH+1):00
      * Example: 07:01 to 08:00, 08:01 to 09:00, etc.
+     * Times at HH:00 belong to the previous hour's block.
      */
     public WeatherType getWeather(LocalDateTime time) {
         // Find the 1-hour block containing this time
@@ -107,11 +118,20 @@ public class WeatherManager {
     }
 
     /**
-     * Get the start of the 1-hour block for a given time
-     * Blocks always start at HH:01
+     * Get the start of the 1-hour block for a given time.
+     * Blocks always start at HH:01.
+     * FIX: For times at HH:00, the block is from (HH-1):01 to HH:00.
      */
     private LocalDateTime getBlockStart(LocalDateTime time) {
         int hour = time.getHour();
+        int minute = time.getMinute();
+
+        // If minute is 0, this time belongs to the previous hour's block
+        if (minute == 0) {
+            hour = hour - 1;
+            if (hour < 0) hour = 23; // wrap around midnight if needed
+        }
+
         // Block starts at HH:01
         return time.withHour(hour).withMinute(1).withSecond(0).withNano(0);
     }
@@ -136,7 +156,7 @@ public class WeatherManager {
 
         LocalDateTime blockEnd = blockStart.plusHours(1);
         WeatherSlot slot = new WeatherSlot(blockStart, blockEnd, type);
-        weatherSlots.add(slot);
+        // Use the overwrite save method
         saveWeatherToFile(slot);
 
         System.out.println("   [Auto] Generated " + type + " weather from " + blockStart + " to " + blockEnd);
@@ -171,7 +191,6 @@ public class WeatherManager {
         }
 
         WeatherSlot slot = new WeatherSlot(blockStart, blockEnd, type);
-        weatherSlots.add(slot);
         saveWeatherToFile(slot);
 
         System.out.println("\n✅ Weather set: " + type + " from " + blockStart + " to " + blockEnd);
