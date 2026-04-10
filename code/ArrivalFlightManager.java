@@ -10,11 +10,11 @@ public class ArrivalFlightManager {
     private List<Flight> arrivedFlights;
 
     // ANSI Color Codes
-    private static final String RESET = "\u001B[0m";
-    private static final String GREEN = "\u001B[32m";
-    private static final String YELLOW = "\u001B[33m";
-    private static final String RED = "\u001B[31m";
-    private static final String CYAN = "\u001B[36m";
+    private static final String RESET = "";
+    private static final String GREEN = "";
+    private static final String YELLOW = "";
+    private static final String RED = "";
+    private static final String CYAN = "";
 
     public ArrivalFlightManager(FlightManagement fm) {
         this.flightManagement = fm;
@@ -93,10 +93,27 @@ public class ArrivalFlightManager {
 
     public void saveAllArrivedFlights(List<Flight> arrivedFlights) {
         if (arrivedFlights.isEmpty()) return;
+
+        // FIX: Read existing entries to avoid duplicates
+        List<String> existingIds = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(arrivedFlightFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length > 1) {
+                    existingIds.add(parts[1]);
+                }
+            }
+        } catch (IOException e) {
+            // File may not exist, ignore
+        }
+
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(arrivedFlightFilePath, true))) {
             for (Flight f : arrivedFlights) {
-                bw.write(f.toFileString());
-                bw.newLine();
+                if (!existingIds.contains(f.getFlightInstanceId())) {
+                    bw.write(f.toFileString());
+                    bw.newLine();
+                }
             }
             System.out.println(GREEN + "All arrived flights saved to " + arrivedFlightFilePath + RESET);
         } catch (IOException e) {
@@ -104,7 +121,6 @@ public class ArrivalFlightManager {
         }
         arrivedFlights.clear();
     }
-
     public void clearArrivedFlightsFile() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(arrivedFlightFilePath))) {
             bw.write("");
