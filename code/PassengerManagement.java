@@ -167,50 +167,51 @@ public class PassengerManagement {
     public void checkIn(String ticketId, LocalDateTime currentTime) {
         Passenger p = findPassengerByTicket(ticketId);
         if (p == null) {
-            System.out.println(RED + "❌ Invalid ticket." + RESET);
+            System.out.println(RED + " Invalid ticket." + RESET);
             return;
         }
 
         if (p.isBoardingPassIssued()) {
-            System.out.println(YELLOW + "⚠️ Boarding pass already issued." + RESET);
+            System.out.println(YELLOW + " Boarding pass already issued." + RESET);
             return;
         }
 
         if (p.hasCheckedIn()) {
-            System.out.println(YELLOW + "⚠️ Already checked in. Please proceed to gate." + RESET);
+            System.out.println(YELLOW + " Already checked in. Please proceed to gate." + RESET);
             return;
         }
 
         Flight flight = flightManagement.FindFlightByInstanceId(p.getFlightInstanceId());
         if (flight == null) {
-            System.out.println(RED + "❌ Flight not found." + RESET);
+            System.out.println(RED + " Flight not found." + RESET);
             return;
         }
 
-        LocalDateTime flightDepartTime = flight.getDepartDateTime();
+        // FIX: Use passenger's own journey time, not flight's current depart time
+        LocalDateTime passengerDepartTime = p.getJourneyDateTime();
         LocalDateTime flightBoardingStart = flight.getScheduledActionTime();
-        LocalDateTime flightBoardingClose = flightDepartTime.minusMinutes(15);
-        LocalDateTime flightCheckInStart = flightDepartTime.minusHours(2);
+        LocalDateTime flightBoardingClose = passengerDepartTime.minusMinutes(15);
+        LocalDateTime flightCheckInStart = passengerDepartTime.minusHours(2);
         LocalDateTime flightCheckInEnd = flightBoardingClose.minusMinutes(30);
 
-        boolean flightTimeChanged = !p.getJourneyDateTime().equals(flightDepartTime);
+        boolean flightTimeChanged = !p.getJourneyDateTime().equals(flight.getDepartDateTime());
 
         if (flightTimeChanged) {
             System.out.println(YELLOW + "⚠️ Flight time changed." + RESET);
             System.out.println("   Original departure: " + p.getJourneyDateTime());
-            System.out.println("   New departure: " + flightDepartTime);
+            System.out.println("   New departure: " + flight.getDepartDateTime());
             System.out.println("   New check-in starts at: " + flightCheckInStart);
             System.out.println("   New check-in closes at: " + flightCheckInEnd);
             System.out.println("   New boarding starts at: " + flightBoardingStart);
             System.out.println("   New boarding closes at: " + flightBoardingClose);
 
-            p.setJourneyDateTime(flightDepartTime);
+            p.setJourneyDateTime(flight.getDepartDateTime());
             p.setCheckInStartTime(flightCheckInStart);
             savePassengersToFile();
         }
 
         if (currentTime.isBefore(flightCheckInStart)) {
-            System.out.println(RED + "❌ Too early to check in." + RESET);
+            System.out.println(RED + " Too early to check in." + RESET);
             System.out.println("   Check-in starts at: " + flightCheckInStart);
             if (flightTimeChanged) {
                 System.out.println(YELLOW + "   (Flight was delayed. Please return at the new check-in time.)" + RESET);
@@ -219,7 +220,7 @@ public class PassengerManagement {
         }
 
         if (currentTime.isAfter(flightCheckInEnd)) {
-            System.out.println(RED + "❌ Sorry! Check-in is closed." + RESET);
+            System.out.println(RED + " Sorry! Check-in is closed." + RESET);
             System.out.println("   Check-in closed at: " + flightCheckInEnd);
             System.out.println("   Boarding starts at: " + flightBoardingStart);
             System.out.println("   Boarding closes at: " + flightBoardingClose);
@@ -239,7 +240,7 @@ public class PassengerManagement {
             gateInfo = "Will be assigned at boarding";
         }
 
-        System.out.println(GREEN + "\n✅ Check-in successful!" + RESET);
+        System.out.println(GREEN + "\n Check-in successful!" + RESET);
         System.out.println(CYAN + "┌────────────────────────────────────────────────────────────────────────────┐" + RESET);
         System.out.printf(CYAN + "│ " + RESET + "%-20s : " + WHITE + "%-50s" + RESET + CYAN + " │" + RESET + "\n", "Passenger", p.getPassengerName());
         System.out.printf(CYAN + "│ " + RESET + "%-20s : " + WHITE + "%-50s" + RESET + CYAN + " │" + RESET + "\n", "Flight", flight.getFlightInstanceId());
@@ -257,27 +258,26 @@ public class PassengerManagement {
         }
         System.out.println("   Please proceed to gate before boarding closes.\n");
     }
-
     public void processBoarding(String ticketId, LocalDateTime currentTime) {
         Passenger p = findPassengerByTicket(ticketId);
         if (p == null) {
-            System.out.println(RED + "❌ Invalid ticket." + RESET);
+            System.out.println(RED + " Invalid ticket." + RESET);
             return;
         }
 
         if (p.isBoardingPassIssued()) {
-            System.out.println(YELLOW + "⚠️ Boarding pass already issued." + RESET);
+            System.out.println(YELLOW + " Boarding pass already issued." + RESET);
             return;
         }
 
         if (!p.hasCheckedIn()) {
-            System.out.println(RED + "❌ Please check in first at the counter." + RESET);
+            System.out.println(RED + "Please check in first at the counter." + RESET);
             return;
         }
 
         Flight flight = flightManagement.FindFlightByInstanceId(p.getFlightInstanceId());
         if (flight == null) {
-            System.out.println(RED + "❌ Flight not found." + RESET);
+            System.out.println(RED + " Flight not found." + RESET);
             return;
         }
 
@@ -288,7 +288,7 @@ public class PassengerManagement {
         boolean flightTimeChanged = !p.getJourneyDateTime().equals(flightDepartTime);
 
         if (flightTimeChanged) {
-            System.out.println(YELLOW + "⚠️ Flight time has changed since you checked in." + RESET);
+            System.out.println(YELLOW + " Flight time has changed since you checked in." + RESET);
             System.out.println("   Your original departure: " + p.getJourneyDateTime());
             System.out.println("   New departure: " + flightDepartTime);
             System.out.println("   New boarding starts at: " + flightBoardingStart);
@@ -304,21 +304,21 @@ public class PassengerManagement {
 
         if (currentTime.isBefore(flightBoardingStart)) {
             long minutesUntilBoarding = Duration.between(currentTime, flightBoardingStart).toMinutes();
-            System.out.println(RED + "❌ Boarding hasn't started yet." + RESET);
+            System.out.println(RED + " Boarding hasn't started yet." + RESET);
             System.out.println("   Boarding starts at: " + flightBoardingStart);
             System.out.println("   Please return in " + minutesUntilBoarding + " minutes.");
             return;
         }
 
         if (currentTime.isAfter(flightBoardingClose)) {
-            System.out.println(RED + "❌ Sorry! Boarding is over." + RESET);
+            System.out.println(RED + " Sorry! Boarding is over." + RESET);
             System.out.println("   Boarding closed at: " + flightBoardingClose);
             System.out.println("   Flight departed at: " + flightDepartTime);
             return;
         }
 
         if (!"BOARDING".equalsIgnoreCase(flight.getStatus())) {
-            System.out.println(RED + "❌ Flight not boarding yet." + RESET);
+            System.out.println(RED + " Flight not boarding yet." + RESET);
             System.out.println("   Boarding starts at: " + flightBoardingStart);
             System.out.println("   Current flight status: " + flight.getStatus());
             return;
@@ -336,7 +336,7 @@ public class PassengerManagement {
         long minutesUntilDeparture = Duration.between(currentTime, flightDepartTime).toMinutes();
         long minutesUntilBoardingCloses = Duration.between(currentTime, flightBoardingClose).toMinutes();
 
-        System.out.println(GREEN + "\n✅ Boarding pass issued!" + RESET);
+        System.out.println(GREEN + "\n Boarding pass issued!" + RESET);
         System.out.println(CYAN + "┌────────────────────────────────────────────────────────────────────────────┐" + RESET);
         System.out.printf(CYAN + "│ " + RESET + "%-20s : " + WHITE + "%-50s" + RESET + CYAN + " │" + RESET + "\n", "Passenger", p.getPassengerName());
         System.out.printf(CYAN + "│ " + RESET + "%-20s : " + WHITE + "%-50s" + RESET + CYAN + " │" + RESET + "\n", "Gate", gateId);
@@ -346,7 +346,7 @@ public class PassengerManagement {
         System.out.println(CYAN + "└────────────────────────────────────────────────────────────────────────────┘" + RESET);
 
         if (minutesUntilBoardingCloses <= 5) {
-            System.out.println(RED + "   ⚠️ Boarding closes in " + minutesUntilBoardingCloses + " minutes! Please board immediately." + RESET);
+            System.out.println(RED + "    Boarding closes in " + minutesUntilBoardingCloses + " minutes! Please board immediately." + RESET);
         } else {
             System.out.println(GREEN + "   You have " + minutesUntilDeparture + " minutes until departure." + RESET);
         }
@@ -379,7 +379,7 @@ public class PassengerManagement {
     // ============================================================
     public void displayPassengers() {
         if (passengers.isEmpty()) {
-            System.out.println(YELLOW + "\n⚠️ No passengers found." + RESET);
+            System.out.println(YELLOW + "\n️ No passengers found." + RESET);
             return;
         }
 
@@ -412,7 +412,7 @@ public class PassengerManagement {
         }
 
         System.out.println(CYAN + "═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════" + RESET);
-        System.out.println(GREEN + "\n✅ Total passengers: " + passengers.size() + RESET + "\n");
+        System.out.println(GREEN + "\n Total passengers: " + passengers.size() + RESET + "\n");
     }
 
     // Add this helper method if not already present
