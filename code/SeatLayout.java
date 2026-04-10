@@ -87,9 +87,9 @@ public class SeatLayout {
             return "Middle";
     }
 
-    // New method: validate if seat exists within layout
+    // Validate if seat exists within layout
     public boolean isValidSeat(String seat) {
-        if (seat.length() < 2)
+        if (seat == null || seat.length() < 2)
             return false;
         char col = seat.charAt(0);
         int row;
@@ -98,6 +98,10 @@ public class SeatLayout {
         } catch (NumberFormatException e) {
             return false;
         }
+
+        // FIX: Check row bounds explicitly
+        if (row < 1 || row > rows)
+            return false;
 
         if (col < 'A' || col > 'F')
             return false;
