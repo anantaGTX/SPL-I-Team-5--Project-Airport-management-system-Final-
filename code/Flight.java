@@ -162,6 +162,7 @@ public class Flight {
     public void setLastUpdatedTime(LocalDateTime lt) {
         this.lastUpdatedTime = lt;
     }
+    public void setPassengerCount(int count) { this.passengerCount = count;}
 
     // Helper methods
     public int getTotalSeats() {
