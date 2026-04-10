@@ -543,7 +543,6 @@ public class BookingManagement {
             System.out.println(YELLOW + "\n❌ Cancellation aborted." + RESET);
         }
     }
-
     private void cancelSpecificSeats(Passenger passenger, Flight flight, List<String> currentSeats, int currentPrice) {
         System.out.println("\n🪑 Current seats: " + String.join(", ", currentSeats));
         System.out.print("\n🪑 Enter seat(s) to cancel (comma-separated, e.g., A1,B2): ");
@@ -573,7 +572,8 @@ public class BookingManagement {
         }
 
         int actualRefund = (int) (refundAmount * CANCELLATION_REFUND_PERCENTAGE);
-        int newTotalPrice = currentPrice - refundAmount;
+        // FIX: Reduce total price by actual refund, not full seat price
+        int newTotalPrice = currentPrice - actualRefund;
 
         System.out.println("\n📋 Cancellation Summary:");
         System.out.println("   Seats to cancel: " + String.join(", ", cancelledSeats));
