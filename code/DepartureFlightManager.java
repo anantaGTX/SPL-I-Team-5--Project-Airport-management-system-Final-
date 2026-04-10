@@ -10,11 +10,11 @@ public class DepartureFlightManager {
     private String departedFlightFilePath = "departedFlights.txt";
 
     // ANSI Color Codes
-    private static final String RESET = "\u001B[0m";
-    private static final String GREEN = "\u001B[32m";
-    private static final String YELLOW = "\u001B[33m";
-    private static final String RED = "\u001B[31m";
-    private static final String CYAN = "\u001B[36m";
+    private static final String RESET = "";
+    private static final String GREEN = "";
+    private static final String YELLOW = "";
+    private static final String RED = "";
+    private static final String CYAN = "";
 
     public DepartureFlightManager(FlightManagement fm, PassengerManagement pm) {
         this.flightManagement = fm;
@@ -99,10 +99,28 @@ public class DepartureFlightManager {
 
     private void saveDepartedFlights(List<Flight> departedFlights) {
         if (departedFlights.isEmpty()) return;
+
+        // FIX: Read existing entries to avoid duplicates
+        List<String> existingIds = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(departedFlightFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length > 1) {
+                    existingIds.add(parts[1]);
+                }
+            }
+        } catch (IOException e) {
+            // File may not exist, ignore
+        }
+
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(departedFlightFilePath, true))) {
             for (Flight f : departedFlights) {
-                bw.write(f.toFileString());
-                bw.newLine();
+                // Only write if this flight instance hasn't been recorded
+                if (!existingIds.contains(f.getFlightInstanceId())) {
+                    bw.write(f.toFileString());
+                    bw.newLine();
+                }
             }
         } catch (IOException e) {
             System.out.println(RED + "Error saving departed flights: " + e.getMessage() + RESET);
