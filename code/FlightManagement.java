@@ -73,10 +73,22 @@ public class FlightManagement {
                         p[0], p[1], Integer.parseInt(p[2]), Integer.parseInt(p[3]),
                         p[4], p[5], LocalDateTime.parse(p[6]), LocalDateTime.parse(p[7]),
                         LocalDateTime.parse(p[8]), p[9], p[10], p[11]);
+                // FIX: Load occupied seats if present (13th field)
+                if (p.length > 12 && !p[12].isEmpty()) {
+                    String[] seats = p[12].split(";");
+                    for (String seat : seats) {
+                        if (!seat.trim().isEmpty()) {
+                            f.getOccupiedSeats().add(seat.trim());
+                        }
+                    }
+                    // Ensure passengerCount matches occupied seats size
+                    // (override file value to maintain consistency)
+                    f.setPassengerCount(f.getOccupiedSeats().size());
+                }
                 flights.add(f);
             }
 
-            // NEW: Fix gate and runway assignments after loading flights
+            // Fix gate and runway assignments after loading flights
             gateManagement.fixGateAssignments(flights);
             runwayManagement.fixRunwayAssignments(flights);
 
@@ -221,11 +233,17 @@ public class FlightManagement {
     }
 
     public void populateOccupiedSeatsFromPassengers(List<Passenger> passengers) {
+        // First clear all occupied seats to avoid duplicates
+        for (Flight f : flights) {
+            f.getOccupiedSeats().clear();
+            f.setPassengerCount(0);
+        }
         for (Passenger p : passengers) {
             Flight f = FindFlightByInstanceId(p.getFlightInstanceId());
             if (f != null)
                 f.addOccupiedSeats(p.getSeats());
         }
+        saveFlightsToFile();
     }
 
     // ============================================================
@@ -286,14 +304,6 @@ public class FlightManagement {
     /**
      * Find the earliest time when enough ADDITIONAL gates and runways become free
      * to accommodate a batch of 'capacity' flights.
-     * <p>
-     * This accounts for already free resources and only waits for additional ones.
-     *
-     * @param currentTime The current simulation time
-     * @param capacity    Number of flights to schedule simultaneously
-     *                    (gates/runways needed)
-     * @return The earliest time when enough resources are free (with 1 minute
-     *         buffer)
      */
     private LocalDateTime getEarliestFreeTimeForAllResources(LocalDateTime currentTime, int capacity) {
         // Count currently free resources
@@ -330,14 +340,31 @@ public class FlightManagement {
 
         // Find when we have enough ADDITIONAL gates free
         LocalDateTime gateReady = currentTime;
-        if (gatesNeeded > 0 && gateFreeTimes.size() >= gatesNeeded) {
-            gateReady = gateFreeTimes.get(gatesNeeded - 1);
+        if (gatesNeeded > 0) {
+            if (gateFreeTimes.size() >= gatesNeeded) {
+                gateReady = gateFreeTimes.get(gatesNeeded - 1);
+            } else {
+                // Not enough future free events - assume resources free after last known + buffer
+                if (!gateFreeTimes.isEmpty()) {
+                    gateReady = gateFreeTimes.get(gateFreeTimes.size() - 1).plusMinutes(30);
+                } else {
+                    gateReady = currentTime.plusHours(1);
+                }
+            }
         }
 
         // Find when we have enough ADDITIONAL runways free
         LocalDateTime runwayReady = currentTime;
-        if (runwaysNeeded > 0 && runwayFreeTimes.size() >= runwaysNeeded) {
-            runwayReady = runwayFreeTimes.get(runwaysNeeded - 1);
+        if (runwaysNeeded > 0) {
+            if (runwayFreeTimes.size() >= runwaysNeeded) {
+                runwayReady = runwayFreeTimes.get(runwaysNeeded - 1);
+            } else {
+                if (!runwayFreeTimes.isEmpty()) {
+                    runwayReady = runwayFreeTimes.get(runwayFreeTimes.size() - 1).plusMinutes(30);
+                } else {
+                    runwayReady = currentTime.plusHours(1);
+                }
+            }
         }
 
         // Need both, so take the later time
@@ -456,9 +483,7 @@ public class FlightManagement {
         // Calculate start time based on resources becoming free AFTER storm
         LocalDateTime start = getEarliestFreeTimeForAllResources(stormEnd, capacity);
 
-        // ============================================================
-        // FIX: Ensure we never schedule flights before storm ends
-        // ============================================================
+        // Ensure we never schedule flights before storm ends
         if (start.isBefore(stormEnd)) {
             start = stormEnd;
             System.out.println("   Adjusted start time to storm end: " + stormEnd);
@@ -517,9 +542,7 @@ public class FlightManagement {
 
         int missed = holding.size() + delayed.size();
 
-        // ============================================================
         // CASE A: No missed flights
-        // ============================================================
         if (missed == 0) {
             assignGate(current);
             assignRunway(current);
@@ -530,15 +553,11 @@ public class FlightManagement {
             return;
         }
 
-        // ============================================================
         // Determine capacity and gates
-        // ============================================================
         int capacity = Math.min(gateManagement.getTotalGateCount(), runwayManagement.getTotalRunwayCount());
-        int gates = (missed <= 3) ? 1 : capacity; // FIXED: changed from <=3 to <=2
+        int gates = (missed <= 3) ? 1 : capacity;
 
-        // ============================================================
         // Determine start time based on gates
-        // ============================================================
         LocalDateTime start;
         if (gates == 1) {
             start = getEarliestFreeTimeForOneResource(now);
@@ -546,9 +565,7 @@ public class FlightManagement {
             start = getEarliestFreeTimeForAllResources(now, capacity);
         }
 
-        // ============================================================
         // CASE B: No HOLDING flights (arrivals) - present can be processed separately
-        // ============================================================
         if (holding.isEmpty()) {
             // Process present flight first (if exists)
             if (present != null) {
@@ -592,9 +609,7 @@ public class FlightManagement {
             return;
         }
 
-        // ============================================================
         // CASE C: HOLDING flights exist - full priority schedule
-        // ============================================================
         List<Flight> finalSchedule = new ArrayList<>();
         finalSchedule.addAll(holding); // HOLDING arrivals first
         if (present != null) {
@@ -655,9 +670,7 @@ public class FlightManagement {
 
         int missed = holding.size() + delayed.size();
 
-        // ============================================================
         // CASE A: No missed flights
-        // ============================================================
         if (missed == 0) {
             assignGate(current);
             assignRunway(current);
@@ -668,15 +681,11 @@ public class FlightManagement {
             return;
         }
 
-        // ============================================================
         // Determine capacity and gates
-        // ============================================================
         int capacity = Math.min(gateManagement.getTotalGateCount(), runwayManagement.getTotalRunwayCount());
         int gates = (missed <= 3) ? 1 : capacity;
 
-        // ============================================================
         // Determine start time based on gates
-        // ============================================================
         LocalDateTime start;
         if (gates == 1) {
             start = getEarliestFreeTimeForOneResource(now);
@@ -684,9 +693,7 @@ public class FlightManagement {
             start = getEarliestFreeTimeForAllResources(now, capacity);
         }
 
-        // ============================================================
         // Build schedule list
-        // ============================================================
         List<Flight> finalSchedule = new ArrayList<>();
         finalSchedule.addAll(holding); // All HOLDING flights first (arrivals)
         if (present != null) {
